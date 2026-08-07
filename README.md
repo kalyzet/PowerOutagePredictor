@@ -6,6 +6,52 @@
 
 ---
 
+## 0. Quick Start
+
+Cara cepat menjalankan proyek secara lokal (Windows / PowerShell).
+
+### Prasyarat
+
+* Python 3.10+ terinstal.
+* Node.js 18+ terinstal.
+* Dua terminal terbuka: satu untuk backend, satu untuk frontend.
+
+### 1. Backend — FastAPI (port 8000)
+
+```powershell
+# aktifkan virtual env yang sudah ada (.venv atau venv)
+.\.venv\Scripts\Activate.ps1
+
+cd backend
+pip install -r requirements.txt      # hanya pertama kali
+uvicorn app.main:app --reload
+```
+
+* API berjalan di `http://localhost:8000`
+* Swagger docs otomatis: `http://localhost:8000/docs`
+
+### 2. Frontend — React + Vite (port 5173)
+
+```powershell
+cd frontend
+npm install                         # hanya pertama kali
+npm run dev
+```
+
+* Frontend terbuka di `http://localhost:5173`
+* Frontend terhubung ke backend melalui `http://localhost:8000/api`
+  (dikonfigurasi di `frontend/src/services/api.js`)
+* CORS backend sudah mengizinkan origin `localhost:5173`
+
+### Catatan
+
+* Jalankan backend terlebih dahulu, baru frontend.
+* Training model dapat dipicu dari UI atau via `POST /api/training/train`;
+  model tersimpan di `backend/models_storage`.
+* Untuk build produksi frontend: `npm run build` (output ke `frontend/dist`).
+
+---
+
 ## 1. Gambaran Umum
 
 **Power Outage Predictor** adalah aplikasi web personal untuk mencatat, mengelola, menganalisis, dan memprediksi pola pemadaman listrik berdasarkan data historis yang dikumpulkan secara manual oleh pengguna.
