@@ -73,9 +73,24 @@ React + Vite (Frontend)
 
 - Python 3.10+
 - Node.js 18+
-- Dua terminal (backend & frontend)
+- Virtual env tersedia di `.venv` (atau `venv`)
 
-### 1. Backend (port 8000)
+### Opsi A — Satu Perintah (disarankan)
+
+`start.ps1` di root menjalankan backend & frontend sekaligus dan mematikan keduanya saat **Ctrl+C**.
+
+```powershell
+./start.ps1
+```
+
+- Frontend: `http://localhost:5173`
+- API: `http://localhost:8000` · Swagger: `http://localhost:8000/docs`
+
+### Opsi B — Manual (dua terminal)
+
+Jika ingin log terpisah per proses atau develop lebih lanjut.
+
+**Terminal 1 — Backend (port 8000):**
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -84,12 +99,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-- API: `http://localhost:8000`
-- Swagger docs: `http://localhost:8000/docs`
-
-> Pilih venv yang ada: `.venv` atau `venv`.
-
-### 2. Frontend (port 5173)
+**Terminal 2 — Frontend (port 5173):**
 
 ```powershell
 cd frontend
@@ -97,12 +107,11 @@ npm install
 npm run dev
 ```
 
-- App: `http://localhost:5173`
-- Frontend terhubung ke `http://localhost:8000/api` (lihat `frontend/src/services/api.js`)
+> Pilih venv yang ada: `.venv` atau `venv`. Frontend terhubung ke `http://localhost:8000/api` (lihat `frontend/src/services/api.js`).
 
 ### Catatan
 
-- Jalankan backend terlebih dahulu, lalu frontend.
+- Pastikan port `8000` dan `5173` tidak sedang terpakai saat menjalankan `start.ps1`.
 - Training model: lewat UI atau `POST /api/training/train`; hasil disimpan di `backend/models_storage`.
 - Build produksi frontend: `npm run build`.
 
