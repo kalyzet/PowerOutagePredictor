@@ -2,7 +2,7 @@
 # Starts backend (FastAPI) and frontend (Vite) together.
 # Press Ctrl+C to stop both.
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $Root = $PSScriptRoot
 
 function Test-PortInUse {
@@ -30,7 +30,7 @@ $req = Join-Path $Root "backend\requirements.txt"
 $probe = & $venvPython -c "import fastapi,uvicorn,sqlalchemy,joblib,sklearn,pandas,numpy,openpyxl,multipart" 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[INFO] Backend dependencies missing. Installing from requirements.txt..." -ForegroundColor Cyan
-    & $venvPython -m pip install -r $requ
+    & $venvPython -m pip install -r $req
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Failed to install backend dependencies." -ForegroundColor Red
         exit 1

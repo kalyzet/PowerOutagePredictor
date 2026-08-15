@@ -48,7 +48,8 @@ def get_dashboard_charts(db: Session = Depends(get_db)) -> Dict[str, Any]:
     df = pd.DataFrame([{
         "tanggal": o.tanggal,
         "durasi_jam": o.durasi_jam,
-        "jam_mati": o.jam_mati.hour
+        "jam_mati": o.jam_mati.hour,
+        "jam_nyala": o.jam_nyala.hour if o.jam_nyala is not None else o.jam_mati.hour
     } for o in outages])
     
     # Trend (Daily)
@@ -65,23 +66,23 @@ def get_dashboard_charts(db: Session = Depends(get_db)) -> Dict[str, Any]:
             "frekuensi": int(row['frekuensi'])
         })
         
-    # Time distribution
-    bins = [0, 6, 12, 18, 24]
-    labels = ['00:00 - 06:00', '06:00 - 12:00', '12:00 - 18:00', '18:00 - 24:00']
-    
-    df['time_group'] = pd.cut(df['jam_mati'], bins=bins, labels=labels, right=False, include_lowest=True)
-    dist_stats = df['time_group'].value_counts().reset_index()
-    dist_stats.columns = ['time_group', 'count']
-    
-    dist_data = []
-    for _, row in dist_stats.iterrows():
-        dist_data.append({
-            "waktu": str(row['time_group']),
-            "jumlah": int(row['count'])
-        })
-        
-    # Sort dist_data by labels order
-    dist_data.sort(key=lambda x: labels.index(x['waktu']) if x['waktu'] in labels else 0)
+    # Time distribution (all affected hours, 00:00 - 23:00)
+    from collections import Counter
+    hour_counter = Counter()
+    for _, row in df.iterrows():
+        start = row['jam_mati']
+        end = row['jam_nyala']
+        h = start
+        while True:
+            hour_counter[h] += 1
+            if h == end:
+                break
+            h = (h + 1) % 24
+
+    dist_data = [
+        {"waktu": f"{h:02d}:00", "jumlah": hour_counter.get(h, 0)}
+        for h in range(24)
+    ]
         
     return {
         "trend": sorted(trend_data, key=lambda x: x['tanggal']),
