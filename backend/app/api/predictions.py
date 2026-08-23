@@ -88,6 +88,10 @@ def make_prediction(request: PredictionRequest, db: Session = Depends(get_db)):
     else:
         durasi = predict_outage_duration(features)
     
+    prob = float(prob)
+    durasi = float(durasi)
+    prediksi_bool = bool(prob > 0.5)
+
     total = features.get('total_outages', 0)
     if total < 5:
         reliability = "Rendah"
@@ -95,31 +99,30 @@ def make_prediction(request: PredictionRequest, db: Session = Depends(get_db)):
         reliability = "Sedang"
     else:
         reliability = "Tinggi"
-        
-    # Save to Database
+
     today = date.today()
     horizon = (request.target_date - today).days
-    
+
     new_pred = Prediction(
         tanggal_prediksi=today,
         tanggal_target=request.target_date,
         horizon_hari=horizon,
-        prediksi_mati=prob > 0.5,
-        probabilitas=round(prob * 100, 1),
-        prediksi_durasi=durasi if prob > 0.5 else 0.0,
+        prediksi_mati=prediksi_bool,
+        probabilitas=round(float(prob * 100), 1),
+        prediksi_durasi=durasi if prediksi_bool else 0.0,
         model=model_name,
         reliability=reliability
     )
     db.add(new_pred)
     db.commit()
     db.refresh(new_pred)
-    
+
     return {
         "id": new_pred.id,
         "target_date": request.target_date,
-        "prediksi_mati": prob > 0.5,
-        "probabilitas": round(prob * 100, 1),
-        "prediksi_durasi": durasi if prob > 0.5 else 0.0,
+        "prediksi_mati": prediksi_bool,
+        "probabilitas": round(float(prob * 100), 1),
+        "prediksi_durasi": durasi if prediksi_bool else 0.0,
         "model": model_name,
         "reliability": reliability
     }
