@@ -80,11 +80,14 @@ React + Vite (Frontend)
 `start.ps1` di root menjalankan backend & frontend sekaligus dan mematikan keduanya saat **Ctrl+C**.
 
 ```powershell
-./start.ps1
+.\start.ps1          # PowerShell — pakai .\ bukan ./
+.\stop.ps1           # jika server nyangkut setelah Ctrl+C
 ```
 
 - Frontend: `http://localhost:5173`
 - API: `http://localhost:8000` · Swagger: `http://localhost:8000/docs`
+
+> **Kenapa server tetap jalan setelah Ctrl+C?** `start.ps1` menjalankan backend/frontend via `Start-Process -WindowStyle Hidden` (detached). Jika wrapper tertutup paksa (tutup window, Ctrl+Break, atau proses orphan), child process tetap hidup di port 8000/5173. Solusi: jalankan `.\stop.ps1` (kill by port) atau manual `Get-NetTCPConnection -LocalPort 8000,5173 | % { Stop-Process -Id $_.OwningProcess -Force }`. Script terbaru sudah menambahkan fallback kill-by-port di `finally` agar `Ctrl+C` lebih reliable, dan `stop.ps1` tersedia untuk kasus nyangkut.
 
 ### Opsi B — Manual (dua terminal)
 
@@ -111,7 +114,9 @@ npm run dev
 
 ### Catatan
 
-- Pastikan port `8000` dan `5173` tidak sedang terpakai saat menjalankan `start.ps1`.
+- PowerShell pakai `.\start.ps1` (bukan `./start.ps1` — yang terakhir error `CommandNotFoundException` di Windows PowerShell).
+- Pastikan port `8000` dan `5173` tidak sedang terpakai saat menjalankan `start.ps1`; jika error `Port already in use`, jalankan `.\stop.ps1` dulu.
+- Jika `.\start.ps1` error `Virtual env not found` padahal folder `.venv` ada, kemungkinan venv corrupt (hanya berisi `Lib` tanpa `Scripts\python.exe`) — recreate: `Remove-Item .venv -Recurse -Force; python -m venv .venv`.
 - Training model: lewat UI atau `POST /api/training/train`; hasil disimpan di `backend/models_storage`.
 - Build produksi frontend: `npm run build`.
 

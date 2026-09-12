@@ -92,6 +92,9 @@ try {
     Write-Host "Stopping servers..." -ForegroundColor Yellow
     if (-not $backend.HasExited) { Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue }
     if (-not $frontend.HasExited) { Stop-Process -Id $frontend.Id -Force -ErrorAction SilentlyContinue }
+    Get-NetTCPConnection -LocalPort 8000,5173 -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
+        Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+    }
     Stop-Job -Job $tailBackend, $tailFrontend -ErrorAction SilentlyContinue
     Remove-Job -Job $tailBackend, $tailFrontend -Force -ErrorAction SilentlyContinue
     Write-Host "Done." -ForegroundColor Green
