@@ -40,7 +40,7 @@ def get_prediction_logs(db: Session = Depends(get_db)):
             log["error_durasi"] = p.results.error_durasi
             log["prediksi_benar"] = p.results.prediksi_benar
             
-        elif p.tanggal_target < date.today():
+        elif p.tanggal_target <= date.today():
             log["status"] = "Belum Dievaluasi"
             
         logs.append(log)
@@ -55,7 +55,7 @@ def run_evaluation(db: Session = Depends(get_db)):
     today = date.today()
     # Get predictions that are targetted for past dates and don't have results yet
     unevaluated = db.query(Prediction).filter(
-        Prediction.tanggal_target < today
+        Prediction.tanggal_target <= today
     ).filter(
         ~Prediction.results.has()
     ).all()

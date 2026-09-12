@@ -164,13 +164,18 @@ function App() {
     const handleRunEvaluation = async () => {
         setEvalLoading(true);
         try {
-            await evaluationApi.runEvaluation();
-            addToast('Evaluasi (pencocokan data aktual) selesai dijalankan!', 'success');
-            fetchEvaluation();
+            const res = await evaluationApi.runEvaluation();
+            const n = res.data?.evaluated_count ?? 0;
+            addToast(
+                n > 0
+                    ? `Evaluasi selesai: ${n} prediksi dievaluasi.`
+                    : 'Evaluasi selesai: tidak ada prediksi baru yang perlu dievaluasi.',
+                n > 0 ? 'success' : 'info',
+            );
+            await fetchEvaluation();
         } catch (error) {
             console.error('Gagal menjalankan evaluasi', error);
             addToast('Gagal menjalankan evaluasi.', 'error');
-        } finally {
             setEvalLoading(false);
         }
     };
