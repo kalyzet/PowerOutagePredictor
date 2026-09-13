@@ -37,14 +37,20 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 
-# 3. Check ports are free
-if (Test-PortInUse 8000) {
-    Write-Host "[ERROR] Port 8000 is already in use. Stop the existing backend first." -ForegroundColor Red
-    exit 1
-}
-if (Test-PortInUse 5173) {
-    Write-Host "[ERROR] Port 5173 is already in use. Stop the existing frontend first." -ForegroundColor Red
-    exit 1
+# 3. Check ports are free (auto-kill orphan/ghost processes)
+foreach ($port in @(8000, 5173)) {
+    $occupied = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+    if ($occupied) {
+        Write-Host "[INFO] Port $port occupied by orphan process(es). Cleaning up..." -ForegroundColor Yellow
+        $occupied | ForEach-Object { taskkill /F /T /PID $_.OwningProcess 2>&1 | Out-Null }
+        Start-Sleep 2
+        $still = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+        if ($still) {
+            Write-Host "[ERROR] Port $port is still in use. Run .\stop.ps1 first." -ForegroundColor Red
+            exit 1
+        }
+        Write-Host "[OK] Port $port freed." -ForegroundColor Green
+    }
 }
 
 # 4. Log files (temporary, per session)
@@ -90,10 +96,12 @@ try {
 } finally {
     Write-Host ""
     Write-Host "Stopping servers..." -ForegroundColor Yellow
-    if (-not $backend.HasExited) { Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue }
-    if (-not $frontend.HasExited) { Stop-Process -Id $frontend.Id -Force -ErrorAction SilentlyContinue }
+    # Kill by PID with taskkill /T to ensure entire process tree is stopped
+    if (-not $backend.HasExited) { taskkill /F /T /PID $backend.Id 2>&1 | Out-Null }
+    if (-not $frontend.HasExited) { taskkill /F /T /PID $frontend.Id 2>&1 | Out-Null }
+    # Fallback: kill by port in case of orphan/ghost processes
     Get-NetTCPConnection -LocalPort 8000,5173 -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
-        Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+        taskkill /F /T /PID $_.OwningProcess 2>&1 | Out-Null
     }
     Stop-Job -Job $tailBackend, $tailFrontend -ErrorAction SilentlyContinue
     Remove-Job -Job $tailBackend, $tailFrontend -Force -ErrorAction SilentlyContinue
